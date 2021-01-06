@@ -5,7 +5,8 @@ from matplotlib import pyplot as plt
 import tensorflow as tf
 from tensorflow import keras
 import random
-from keras.models import Sequential, load_model
+from keras.models import Sequential,load_model
+# from tensorflow.keras.models import load_model
 from keras.layers import Dense, Activation, Dropout, Flatten, Conv2D, MaxPooling2D
 from keras.optimizers import SGD
 from keras.callbacks import ModelCheckpoint, EarlyStopping
@@ -15,8 +16,8 @@ import os
 class AppWindow:
 
     def __init__(self):
-        self.batch_size = 32
-        self.learning_rate = 0.001
+        self.batch_size_value = 64
+        self.learning_rate = 0.005
         self.optimizer = 'SGD'
         self.input_shape = (32,32,3)
         self.model = Sequential()
@@ -50,7 +51,7 @@ class AppWindow:
 
     def Load_Hyperparameter_Func(self):
         print('Hyperparameter:')
-        print('batch size: ', self.batch_size)
+        print('batch size: ', self.batch_size_value)
         print('learning rate: ', self.learning_rate)
         print('optimizer: ', self.optimizer)
         print('input size: ', self.input_shape)
@@ -147,7 +148,8 @@ class AppWindow:
         self.model.add(Dense(units = 10,
                        activation = 'softmax'))
         
-        opt = SGD(self.learning_rate)
+        opt = SGD(lr = self.learning_rate, momentum = 0.9,
+                decay = 0.0005)
         self.model.compile(optimizer = opt, 
                            loss = keras.losses.categorical_crossentropy,
                            metrics = ['accuracy'])
@@ -177,26 +179,27 @@ class AppWindow:
             early = EarlyStopping(monitor = 'val_accuracy', min_delta = 0,
                                 patience = 20, verbose = 1, 
                                 mode = 'auto')
-            hist = self.model.fit(X_train, y_train_one, batch_size=4, 
+            hist = self.model.fit(X_train, y_train_one, batch_size=self.batch_size_value, 
                                 epochs=20, validation_data=(X_test, y_test_one), 
                                 callbacks=[checkpoint, early])
-            fig, (ax1, ax2) = plt.subplots(2, 1)
+            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20,10))
 
             # show accuray
             ax1.set_title('Accuracy')
-            ax1.plot(hist.history['accuracy'])
-            ax1.plot(hist.history['val_accuracy'])
+            ax1.plot(hist.history['accuracy'], label='accuracy')
+            ax1.plot(hist.history['val_accuracy'], label='val_accuracy')
             ax1.set_xlabel('Epoch')
             ax1.set_ylabel('Accuracy')
+            ax1.legend(loc = 'upper right')
 
             # show loss
             ax2.plot(hist.history['loss'])
             ax2.set_title('Loss')
             ax2.set_xlabel('Epoch')
             ax2.set_ylabel('Loss')
-
-            plt.show()
             plt.savefig('result.png')
+            plt.show()
+            
         
     def Test_Model_Func(self, current_value):
         clear_session() # use to avoid gpu outoff memory, clear session before using
